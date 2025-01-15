@@ -13,61 +13,118 @@ def compute_functional_derivative_taylor(functional, integrand, perturbation_var
     Returns:
         sympy.Expr: The functional derivative.
     """
-    # Perturb the variable: rho -> rho + delta_rho
     perturbed_variable = perturbation_variable + perturbation
-
-    # Replace the variable in the integrand
     perturbed_integrand = integrand.subs(perturbation_variable, perturbed_variable)
-
-    # Compute the derivative of the perturbed integrand with respect to the perturbation
     functional_derivative = sp.diff(perturbed_integrand, perturbation).subs(perturbation, 0)
-
     return functional_derivative
 
+def compute_double_integral_derivative(integrand, var1, var2, func1, func2, delta1, delta2):
+    """
+    Compute functional derivative for double integral expressions.
+    
+    Args:
+        integrand (sympy.Expr): The integrand containing two variables
+        var1, var2 (sympy.Symbol): Integration variables (e.g., r1, r2)
+        func1, func2 (sympy.Function): Functions of the respective variables
+        delta1, delta2 (sympy.Function): Perturbation functions
+    
+    Returns:
+        sympy.Expr: The functional derivative after integration
+    """
+    # Perturb both functions
+    perturbed_integrand = integrand.subs([
+        (func1, func1 + delta1),
+        (func2, func2 + delta2)
+    ])
+    
+    # Expand and get first-order terms
+    expanded = sp.expand(perturbed_integrand)
+    
+    # Take derivative with respect to first perturbation and evaluate at zero
+    derivative = sp.diff(expanded, delta1).subs([
+        (delta1, 0),
+        (delta2, 0)
+    ])
+    
+    # Integrate over second variable
+    full_derivative = sp.Integral(derivative, (var2, -sp.oo, sp.oo))
+    
+    return full_derivative
 
 # Symbols
-r = sp.symbols('r')  # Spatial variable
-r_prime = sp.symbols('r_prime')  # Another spatial variable for the double integral
-rho = sp.Function('rho')(r)  # Density function at r
-rho_prime = sp.Function('rho')(r_prime)  # Density function at r_prime
-delta_rho = sp.Function('delta_rho')(r)  # Perturbation to the density
-delta_rho1 = sp.Function('delta_rho')(r_prime)  # Perturbation to rho_prime
-C_x = sp.symbols('C_x')  # Constant for XC energy
-k = sp.symbols('k')  # Coulomb constant
-C_TF = sp.symbols('C_TF') 
-r1, r2 = sp.symbols('r1 r2')  # Spatial variables for r1 and r2
-rho1 = sp.Function('rho')(r1)  # Density at r1
-rho2 = sp.Function('rho')(r2)  # Density at r2
-delta_rho1 = sp.Function('delta_rho')(r1)  # Perturbation at r1
-
+r = sp.symbols('r')
+r_prime = sp.symbols('r_prime')
+rho = sp.Function('rho')(r)
+rho_prime = sp.Function('rho')(r_prime)
+delta_rho = sp.Function('delta_rho')(r)
+delta_rho1 = sp.Function('delta_rho')(r_prime)
+C_x = sp.symbols('C_x')
+k = sp.symbols('k')
+C_TF = sp.symbols('C_TF')
+r1, r2 = sp.symbols('r1 r2')
+rho1 = sp.Function('rho')(r1)
+rho2 = sp.Function('rho')(r2)
+delta_rho1 = sp.Function('delta_rho')(r1)
+delta_rho2 = sp.Function('delta_rho')(r2)
 
 # Example 1: XC Energy Functional
-# Define the integrand for XC energy functional
 integrand_xc = C_x * rho**(4/3)
-
-# Compute the functional derivative using Taylor expansion
 functional_derivative_xc = compute_functional_derivative_taylor(None, integrand_xc, rho, delta_rho)
 print("Functional Derivative (XC Energy):")
 print(functional_derivative_xc)
 
-
-# Example 2: Hartree Energy Functional
-# Define the integrand for Hartree energy functional
+# Example 2: Hartree Energy Functional (using new double integral method)
 integrand_hartree = (rho1 * rho2) / sp.Abs(r1 - r2)
-
-# Compute the functional derivative using Taylor expansion
-perturbed_hartree = integrand_hartree.subs(rho1, rho1 + delta_rho1)
-functional_derivative_hartree = sp.diff(perturbed_hartree, delta_rho1).subs(delta_rho1, 0)
-functional_derivative_hartree = sp.Integral(functional_derivative_hartree, (r2, -sp.oo, sp.oo))
+functional_derivative_hartree = compute_double_integral_derivative(
+    integrand_hartree,
+    r1, r2,
+    rho1, rho2,
+    delta_rho1, delta_rho2
+)
 print("\nFunctional Derivative (Hartree Energy):")
 print(functional_derivative_hartree)
 
-
 # Example 3: Thomas–Fermi Kinetic Energy Functional
-# Define the integrand for Thomas–Fermi kinetic energy functional
 integrand_tf = C_TF * rho**(5/3)
-
-# Compute the functional derivative using Taylor expansion
 functional_derivative_tf = compute_functional_derivative_taylor(None, integrand_tf, rho, delta_rho)
 print("\nFunctional Derivative (Thomas–Fermi Kinetic Energy):")
 print(functional_derivative_tf)
+
+# Example 4: Generic double integral example
+def compute_generic_double_integral_derivative(integrand_expr, vars_tuple, funcs_tuple, deltas_tuple):
+    """
+    Generic method for any double integral functional derivative.
+    
+    Args:
+        integrand_expr: The integrand expression
+        vars_tuple: Tuple of integration variables (var1, var2)
+        funcs_tuple: Tuple of functions (func1, func2)
+        deltas_tuple: Tuple of perturbations (delta1, delta2)
+    
+    Returns:
+        The functional derivative
+    """
+    return compute_double_integral_derivative(
+        integrand_expr,
+        vars_tuple[0], vars_tuple[1],
+        funcs_tuple[0], funcs_tuple[1],
+        deltas_tuple[0], deltas_tuple[1]
+    )
+
+# Example usage for a generic double integral
+# For any integrand of the form f(x,y) * g(x,y)
+x, y = sp.symbols('x y')
+f = sp.Function('f')(x)
+g = sp.Function('g')(y)
+delta_f = sp.Function('delta_f')(x)
+delta_g = sp.Function('delta_g')(y)
+
+generic_integrand = f * g / (x - y)**2  # Example generic integrand
+generic_derivative = compute_generic_double_integral_derivative(
+    generic_integrand,
+    (x, y),
+    (f, g),
+    (delta_f, delta_g)
+)
+print("\nGeneric Double Integral Derivative Example:")
+print(generic_derivative)
