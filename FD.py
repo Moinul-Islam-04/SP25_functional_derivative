@@ -31,21 +31,25 @@ def compute_double_integral_derivative(integrand, var1, var2, func1, func2, delt
     Returns:
         sympy.Expr: The functional derivative after integration
     """
+
+    #implement the deltas into the subroutine
+    #include alpha and beta as the variables for the perturbation functions
+
+    
     # Perturb both functions
     perturbed_integrand = integrand.subs([
         (func1, func1 + delta1),
         (func2, func2 + delta2)
     ])
-    
+
     # Expand and get first-order terms
     expanded = sp.expand(perturbed_integrand)
-    
+
     # Take derivative with respect to first perturbation and evaluate at zero
     derivative = sp.diff(expanded, delta1).subs([
         (delta1, 0),
         (delta2, 0)
     ])
-    
     # Integrate over second variable
     full_derivative = sp.Integral(derivative, (var2, -sp.oo, sp.oo))
     
@@ -128,3 +132,15 @@ generic_derivative = compute_generic_double_integral_derivative(
 )
 print("\nGeneric Double Integral Derivative Example:")
 print(generic_derivative)
+
+# Example 5: Generic single integral example
+generic_integrand_2 =  (rho1**3 * rho2**3) / sp.Abs(r1 - r2)
+generic_derivative_2 = compute_double_integral_derivative(
+    generic_integrand_2,
+    r1, r2,
+    rho1, rho2,
+    delta_rho1, delta_rho2
+)
+print("\nFunctional Derivative (Hartree Energy):")
+print(generic_derivative_2)
+
