@@ -129,10 +129,23 @@ def test_TF():
     print("\nFunctional Derivative (Thomas–Fermi Kinetic Energy):")
     print(result)
 
+
+
+def WinKx():
+    x, y = sp.symbols('x y')
+    f = sp.Function('f')
+    g = sp.Function('g')
+    expr = f(g(x))
+    dydx = sp.diff(expr, x)
+    print(dydx)
+
+
 # Run all tests
-print("Hartree potential result:")
-print(test_hartree())
-print("\nGeneral case result:")
-print(test_general())
-test_XC()
-test_TF()
+#print("Hartree potential result:")
+#print(test_hartree())
+#print("\nGeneral case result:")
+#print(test_general())
+#test_XC()
+#test_TF()
+
+WinKx()
